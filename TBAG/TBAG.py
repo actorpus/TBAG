@@ -35,7 +35,8 @@ class Game:
     file_data = ""
 
     def __init__(self):
-        if "NEW" in os.listdir("games"):
+        print(open("new.txt").read())
+        if open("new.txt").read() == "":
             self.slow_read(f"Thank you for playing!\n"
                            f"The default map is called '{Colours.blue}default{Colours.white}'\n"
                            f"all commands can be listed by typing help when loaded into a game\n"
@@ -44,7 +45,8 @@ class Game:
                            f"TBAG is an engine, the '{Colours.blue}default{Colours.white}' map is just to show "
                            f"potential")
             time.sleep(5)
-            os.remove("games/NEW")
+            with open("new.txt", "w") as new_file:
+                new_file.write("NO")
             os.system("cls")
 
         self.coins = 0
