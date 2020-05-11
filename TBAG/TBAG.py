@@ -26,16 +26,18 @@ class Colours:
     yellow = colorama.Fore.YELLOW
 
 
+print(Colours.white, end="")
+
+
 class Game:
     coins = 0
     room_data = []
     alive = True
     player = [0]
-    slow_read_time = 0
+    slow_read_time = 0.06
     file_data = ""
 
     def __init__(self):
-        print(open("new.txt").read())
         if open("new.txt").read() == "":
             self.slow_read(f"Thank you for playing!\n"
                            f"The default map is called '{Colours.blue}default{Colours.white}'\n"
@@ -47,13 +49,21 @@ class Game:
             time.sleep(5)
             with open("new.txt", "w") as new_file:
                 new_file.write("NO")
-            os.system("cls")
+            self.clear()
 
         self.coins = 0
         self.alive = True
         self.player[0] = 0  # location
 
         self.set_game()
+
+    def clear(self):
+        if os.name == 'nt':
+            _ = os.system('cls')
+
+            # for mac and linux(here, os.name is 'posix')
+        else:
+            _ = os.system('clear')
 
     def slow_read(self, read, read_time=slow_read_time, nice_end=True):
         skip = 0
@@ -176,7 +186,7 @@ class Game:
         with open(f"games/{game_file}.dat", "rb") as file:
             self.room_data = pickle.load(file)
             self.file_data = game_file
-        os.system("cls")
+        self.clear()
 
 
 if __name__ == "__main__":
@@ -192,7 +202,7 @@ if __name__ == "__main__":
             game.wait(random.randrange(7, 10), f"{Colours.yellow}Reloading game file:  {Colours.white}")
             with open(f"games/{game.file_data}.dat", "rb") as file:
                 game.room_data = pickle.load(file)
-            os.system("cls")
+            game.clear()
     s_deaths = 2 if deaths - 1 >= 2 else deaths - 1
     print(f"you died {deaths - 1} time{f's!s'[s_deaths]}")
     os.system("pause")
