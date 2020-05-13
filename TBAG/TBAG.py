@@ -29,6 +29,15 @@ class Colours:
 print(Colours.white, end="")
 
 
+def clear():
+    if os.name == 'nt':
+        _ = os.system('cls')
+
+        # for mac and linux(here, os.name is 'posix')
+    else:
+        _ = os.system('clear')
+
+
 class Game:
     coins = 0
     room_data = []
@@ -38,32 +47,18 @@ class Game:
     file_data = ""
 
     def __init__(self):
-        if open("new.txt").read() == "":
-            self.slow_read(f"Thank you for playing!\n"
-                           f"The default map is called '{Colours.blue}default{Colours.white}'\n"
-                           f"all commands can be listed by typing help when loaded into a game\n"
-                           f"{Colours.red}ONLY load games that come from yourself or a trusted source!{Colours.white}\n"
-                           f"please run with python.exe, editors like PyCharm can cause bug's\n"
-                           f"TBAG is an engine, the '{Colours.blue}default{Colours.white}' map is just to show "
-                           f"potential")
+        if open("new").read() == "":
+            self.slow_read(open("new data").read())
             time.sleep(5)
             with open("new.txt", "w") as new_file:
                 new_file.write("NO")
-            self.clear()
+            clear()
 
         self.coins = 0
         self.alive = True
         self.player[0] = 0  # location
 
         self.set_game()
-
-    def clear(self):
-        if os.name == 'nt':
-            _ = os.system('cls')
-
-            # for mac and linux(here, os.name is 'posix')
-        else:
-            _ = os.system('clear')
 
     def slow_read(self, read, read_time=slow_read_time, nice_end=True):
         skip = 0
@@ -79,6 +74,13 @@ class Game:
                             print(f"\033[{read[ind + 2]}{read[ind + 3]}", end="")
                         else:
                             print(f"\033[{read[ind + 2]}{read[ind + 3]}{read[ind + 4]}", end="")
+                    elif i == "\\":
+                        skip = 1
+                        print("\n", end="")
+                    elif read[ind:ind+9] == "{Colours.":
+                        skip = 14
+                        color = read[ind+9:ind+14]
+                        print(eval(f"Colours.{color}"), end="")
                     else:
                         print(i, end="", flush=True)
                         time.sleep(read_time)
@@ -183,10 +185,10 @@ class Game:
             time.sleep(0.5)
             if game_file + ".dat" not in os.listdir("games"):
                 self.slow_read(f"Game file '{game_file}' could not be read, please try again")
-        with open(f"games/{game_file}.dat", "rb") as file:
-            self.room_data = pickle.load(file)
+        with open(f"games/{game_file}.dat", "rb") as File:
+            self.room_data = pickle.load(File)
             self.file_data = game_file
-        self.clear()
+        clear()
 
 
 if __name__ == "__main__":
@@ -202,7 +204,7 @@ if __name__ == "__main__":
             game.wait(random.randrange(7, 10), f"{Colours.yellow}Reloading game file:  {Colours.white}")
             with open(f"games/{game.file_data}.dat", "rb") as file:
                 game.room_data = pickle.load(file)
-            game.clear()
+            clear()
     s_deaths = 2 if deaths - 1 >= 2 else deaths - 1
     print(f"you died {deaths - 1} time{f's!s'[s_deaths]}")
     os.system("pause")
