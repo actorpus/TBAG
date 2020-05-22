@@ -60,6 +60,11 @@ class Game:
 
         self.set_game()
 
+    def god_mode(self):
+        self.coins = 1000
+        self.slow_read_time = 0
+        print(self.slow_read_time)
+
     def slow_read(self, read, read_time=slow_read_time, nice_end=True):
         skip = 0
         if read == "CONGRATULATIONS YOU WIN":
@@ -95,12 +100,12 @@ class Game:
         for i in range(seconds * flip_rate):
             print(f"\r{msg} ({stuff[i % 4]})", end="")
             time.sleep(1 / flip_rate)
-        print(f"\r{msg}                  ")
+        print(f"\r{msg}                           ")
 
     def move(self, position):
         try:
             self.player[0] = position
-            self.slow_read(self.room_data[self.player[0]]["desc"])
+            self.slow_read(self.room_data[self.player[0]]["desc"], self.slow_read_time)
             self.room_data[self.player[0]]["count"] += 1
             if self.room_data[self.player[0]]["count"] == 1 and self.room_data[self.player[0]]["1st_desc"]:
                 self.slow_read(self.room_data[self.player[0]]["1st_desc"])
@@ -136,6 +141,9 @@ class Game:
                 return False, "You cannot go that way"
         elif player_input.lower() in ["inv", "help"]:
             return True, player_input
+        elif player_input.lower() == "wwssadadqeqe":
+            self.god_mode()
+            return True, "GOD MODE ENABLED"
         else:
             return False, "I don't know how to '" + player_input + "'"
 
