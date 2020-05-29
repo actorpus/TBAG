@@ -4,6 +4,7 @@ import pickle
 import os
 import random
 import sys
+import logging
 
 try:
     import colorama
@@ -13,6 +14,12 @@ except ImportError:
     os.system("pause")
     sys.exit()
 colorama.init()
+
+LOGGING_FORMAT = "%(levelname)s %(asctime)s %(funcName)s :: %(message)s"
+logging.basicConfig(format=LOGGING_FORMAT, level=logging.DEBUG, filename="game_log.log")
+logger = logging.getLogger("game_logger")
+
+logger.info("\n---=== GAME START ===---")
 
 
 class Colours:
@@ -29,14 +36,21 @@ class Colours:
 print(Colours.white, end="")
 
 
-def clear():
-    if os.name == 'nt':
-        _ = os.system('cls')
+def clear(pause=False):
+    if not pause:
+        if os.name == 'nt':
+            _ = os.system('cls')
 
-        # for mac and linux(here, os.name is 'posix')
+            # for mac and linux(here, os.name is 'posix')
+        else:
+            _ = os.system('clear')
     else:
-        _ = os.system('clear')
+        if os.name == 'nt':
+            _ = os.system('pause')
 
+        # there is no linux pause command uses input instead
+        else:
+            _ = input("Press enter key to continue . . .")
 
 class Game:
     coins = 0
@@ -47,10 +61,12 @@ class Game:
     file_data = ""
 
     def __init__(self):
+        logger.info("GAME object setup")
         if open("new").read() == "":
+            logger.info("presenting 1st time info")
             self.slow_read(open("new data").read())
             time.sleep(5)
-            with open("new.txt", "w") as new_file:
+            with open("new", "w") as new_file:
                 new_file.write("NO")
             clear()
 
@@ -61,11 +77,13 @@ class Game:
         self.set_game()
 
     def god_mode(self):
+        logger.debug("GOD MODE enabled")
         self.coins = 1000
         self.slow_read_time = 0
         print(self.slow_read_time)
 
     def slow_read(self, read, read_time=slow_read_time, nice_end=True):
+        logger.debug("slow read triggered with data {%s..., %s, %s}" % (read[:20], read_time, nice_end))
         skip = 0
         if read == "CONGRATULATIONS YOU WIN":
             self.alive = False
@@ -79,7 +97,7 @@ class Game:
                             print(f"\033[{read[ind + 2]}{read[ind + 3]}", end="")
                         else:
                             print(f"\033[{read[ind + 2]}{read[ind + 3]}{read[ind + 4]}", end="")
-                    elif i == "\\":
+                    elif i == "\\" and read[ind+1] != "¬":
                         skip = 1
                         print("\n", end="")
                     elif read[ind:ind+9] == "{Colours.":
@@ -95,15 +113,18 @@ class Game:
                 print(flush=True)
 
     def wait(self, seconds, msg="please wait", flip_rate=2):
+        logger.debug("wait triggered with data {%s, %s, %s}" %(seconds, msg, flip_rate))
         stuff = "|/—\\"
-        self.slow_read(f"{msg} (\\)", self.slow_read_time, False)
+        self.slow_read(f"{msg} (\\¬)", self.slow_read_time, False)
         for i in range(seconds * flip_rate):
             print(f"\r{msg} ({stuff[i % 4]})", end="")
             time.sleep(1 / flip_rate)
-        print(f"\r{msg}                           ")
+        print(f"\r{msg}{' '*50}")
 
     def move(self, position):
+        logger.debug("move triggered with data {%s}" % position)
         try:
+            logger.debug("player position updated from %s to %s" % (self.player[0], position))
             self.player[0] = position
             self.slow_read(self.room_data[self.player[0]]["desc"], self.slow_read_time)
             self.room_data[self.player[0]]["count"] += 1
@@ -131,9 +152,12 @@ class Game:
             print(end="", flush=True)
 
     def read_input(self):
+        logger.debug("read input triggered")
         self.slow_read("What now?", self.slow_read_time, False)
         player_input = input("")
+        logger.debug("player input recorded data of {%s}" % player_input)
         player_input = player_input.lower()
+        logger.debug("player inputted data{%s}" % player_input)
         if player_input.lower() in ["n", "s", "e", "w"]:
             if player_input.lower() in self.room_data[self.player[0]].keys():
                 return True, player_input
@@ -148,6 +172,7 @@ class Game:
             return False, "I don't know how to '" + player_input + "'"
 
     def proses_input(self, command):
+        logger.debug("proses_input triggered with data {%s}" % command)
         if command.lower() in ["n", "s", "e", "w", "push button", "yes", "no"]:
             self.move(self.room_data[self.player[0]][command])
         elif command.lower() == "inv":
@@ -158,11 +183,13 @@ class Game:
                 self.slow_read(f"> {i}")
 
     def run(self, override_running=False):
+        logger.debug("run triggered with data {%s}" % override_running)
         for i in self.room_data:
             i["count"] = 0
         if not override_running:
             self.move(self.player[0])
             while self.alive:
+                logger.debug("game loop tick")
                 command = self.read_input()
                 if command[0]:
                     self.proses_input(command[1])
@@ -174,11 +201,13 @@ class Game:
             return True
 
     def reset(self):
+        logger.debug("reset triggered")
         self.coins = 0
         self.alive = True
         self.player = [0]
 
     def set_game(self):
+        logger.debug("set game triggered")
         game_file = ""
         while game_file + ".dat" not in os.listdir("games"):
             # self.slow_read("Getting Game files", self.slow_read_time, False)
@@ -188,12 +217,15 @@ class Game:
                     self.slow_read(f">\033[34m {i[:-4]}\033[0m")
             self.slow_read(f"{Colours.yellow}game file? {Colours.white}>{Colours.blue} ", self.slow_read_time, False)
             game_file = input()
+            logger.debug("set_game recorded input {%s}" % game_file)
             self.wait(random.randrange(7, 10), f"{Colours.yellow}Loading game file ({Colours.blue}"
                                                f"{game_file}{Colours.yellow}):  {Colours.white} ")
             time.sleep(0.5)
             if game_file + ".dat" not in os.listdir("games"):
+                logger.debug("set_game invalid response")
                 self.slow_read(f"Game file '{game_file}' could not be read, please try again")
         with open(f"games/{game_file}.dat", "rb") as File:
+            logger.debug("set_game loading file {'games/%s.dat'}" % game_file)
             self.room_data = pickle.load(File)
             self.file_data = game_file
         clear()
@@ -215,4 +247,6 @@ if __name__ == "__main__":
             clear()
     s_deaths = 2 if deaths - 1 >= 2 else deaths - 1
     print(f"you died {deaths - 1} time{f's!s'[s_deaths]}")
-    os.system("pause")
+    clear(True)
+else:
+    print("thanks for using the TBAG engine!")
